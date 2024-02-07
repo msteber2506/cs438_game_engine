@@ -50,26 +50,7 @@ class Game:
         time.sleep(interval)
 
 
-if __name__ == '__main__':
 
-    frame = Frame(500, 500)
-    game = Game(frame)
-
-    square = Drawable(50,50, 0, 0)
-    frame.addDrawable(square)
-
-    while True:
-        # main game loop code goes here
-        square.xloc += 1
-        square.yloc += 1
-
-        # update and render frame
-        frame.update()
-        frame.render()
-        Game.tick(30)
-        if cv2.waitKey(1) & 0xFF == 27:  # Press 'Esc' to exit
-            break
-    cv2.destroyAllWindows()
 
 
 
