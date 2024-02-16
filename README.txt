@@ -1,1 +1,1 @@
-For some operating systems, you might need to adjust privacy or accessibility settings to allow the program to monitor keyboard input. 
+For some operating systems, you might need to change your privacy or accessibility settings to allow the program to monitor keyboard input. 
