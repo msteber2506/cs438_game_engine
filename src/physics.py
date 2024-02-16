@@ -13,17 +13,17 @@ class Collision:
             return True
         return False
 
-    class PhysicsObject:
-        def __init__(self, x=0, y=0, vx=0, vy=0):
-            self.x = x  # initial x position
-            self.y = y  # initial y position
-            self.vx = vx  # initial velocity in x direction
-            self.vy = vy  # initial velocity in y direction
-        
-        def update(self, dt):
-            # Update position using kinematic equations
-            self.x += self.vx * dt
-            self.y += self.vy * dt
+class PhysicsObject:
+    def __init__(self, x=0, y=0, vx=0, vy=0):
+        self.x = x  # initial x position
+        self.y = y  # initial y position
+        self.vx = vx  # initial velocity in x direction
+        self.vy = vy  # initial velocity in y direction
+    
+    def update(self, dt):
+        # Update position using kinematic equations
+        self.x += self.vx * dt
+        self.y += self.vy * dt
 
 class PhysicsSystem:
     def __init__(self):
