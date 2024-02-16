@@ -7,6 +7,7 @@ class Player(Drawable):
     def __init__(self, width, height, xloc, yloc):
         super().__init__(width, height, xloc, yloc)
 
+    #move player around the screen
     def action(self, key):
         if key == Key.up:
             self.yloc -= 5
