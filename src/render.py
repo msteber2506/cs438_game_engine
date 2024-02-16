@@ -17,7 +17,7 @@ class Drawable:
                 if y+self.yloc < frame.height and x+self.xloc < frame.width:
                     frame.frame[y+self.yloc, x+self.xloc] = [255, 0, 0, 50]
 
-
+#simulate the frame buffer
 class Frame:
 
     def __init__(self, width, height):
