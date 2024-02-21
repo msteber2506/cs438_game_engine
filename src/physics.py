@@ -35,3 +35,7 @@ class PhysicsSystem:
     def update(self, dt):
         for obj in self.objects:
             obj.update(dt)
+
+class ProjectileThrower:
+    def __init__(self, projectile):
+        self.projectile = projectile
