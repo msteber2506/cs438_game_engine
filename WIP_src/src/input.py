@@ -1,5 +1,4 @@
 from pynput import keyboard
-#hwllo
 
 class EventListener:
     pressed_key = None

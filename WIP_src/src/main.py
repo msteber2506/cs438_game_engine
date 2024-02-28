@@ -3,6 +3,7 @@ from player import Player
 from input import EventListener
 import cv2
 
+
 if __name__ == '__main__':
 
     # frame = Frame(500, 500)
@@ -16,8 +17,8 @@ if __name__ == '__main__':
 
     EventListener = EventListener()
 
-    background_path = 'Background.png'
-    sprite_path = 'mario.png'
+    background_path = '../../resources/Background.png'
+    sprite_path = '../../resources/mario.png'
     frame = Frame(background_path)
     game = Game(frame)
     player = Player(sprite_path, frame)
@@ -26,9 +27,6 @@ if __name__ == '__main__':
         # main game loop code goes here
 
         #player.action(EventListener.pressed_key)
-
-
-        # update and render frame
         # frame.update()
         # frame.render()
     
@@ -46,6 +44,4 @@ if __name__ == '__main__':
 
         frame.move_background(player)
 
-
-        
     cv2.destroyAllWindows()

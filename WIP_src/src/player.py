@@ -21,7 +21,7 @@ import cv2
 #             self.xloc += 5
 
 class Player:
-    def __init__(self, filepath, frame, resize_factor=0.08):
+    def __init__(self, filepath, frame, resize_factor=0.04):
         self.sprite = cv2.imread(filepath, cv2.IMREAD_UNCHANGED)
         self.sprite = cv2.resize(self.sprite, (0, 0), fx=resize_factor, fy=resize_factor)
         self.xloc = 100
@@ -29,7 +29,7 @@ class Player:
         self.speed = 10
         self.frame = frame
 
-    def move(self, key):
+    def action(self, key):
         if key == ord('w') and self.yloc > 0:
             self.yloc -= self.speed
         elif key == ord('s') and self.yloc < self.frame.background.shape[0] - self.sprite.shape[0]:
