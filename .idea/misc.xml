@@ -3,5 +3,5 @@
   <component name="Black">
     <option name="sdkName" value="Python 3.9 (cs438_game)" />
   </component>
-  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.9 (cs438_game)" project-jdk-type="Python SDK" />
+  <component name="ProjectRootManager" version="2" project-jdk-name="Python 3.12 (cs438_game_engine)" project-jdk-type="Python SDK" />
 </project>

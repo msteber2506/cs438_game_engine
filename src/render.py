@@ -15,7 +15,7 @@ class Drawable:
         for y in range(0, self.height):
             for x in range(0, self.width):
                 if y+self.yloc < frame.height and x+self.xloc < frame.width:
-                    frame.frame[y+self.yloc, x+self.xloc] = [255, 0, 0, 50]
+                    frame.frame[y+self.yloc, x+self.xloc] = [255, 0, 0]
 
 #simulate the frame buffer
 class Frame:
@@ -23,7 +23,7 @@ class Frame:
     def __init__(self, width, height):
         self.width = width
         self.height = height
-        self.frame = np.zeros((width, height, 4), dtype=np.uint8)
+        self.frame = np.zeros((width, height, 3), dtype=np.uint8)
         self.drawables = []
         cv2.namedWindow('Game Screen', cv2.WINDOW_NORMAL)
 
@@ -31,7 +31,7 @@ class Frame:
         cv2.imshow('Game Screen', self.frame)
 
     def update(self):
-        self.frame = np.zeros((self.width, self.height, 4), dtype=np.uint8)
+        self.frame = np.zeros((self.width, self.height, 3), dtype=np.uint8)
         for drawable in self.drawables:
             drawable.draw(self)
 

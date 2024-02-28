@@ -12,7 +12,7 @@ if __name__ == '__main__':
     square = Drawable(500, 100, 0, 400)
     frame.addDrawable(square)
 
-    player = Player(20, 20, 100, 100)
+    player = Player(20, 20, 100, 100, r"C:\Users\msteb\PycharmProjects\cs438_game_engine\resources\mario.png")
     frame.addDrawable(player)
 
     EventListener = EventListener()
@@ -21,6 +21,7 @@ if __name__ == '__main__':
         # main game loop code goes here
 
         player.action(EventListener.pressed_key)
+        player.move("down")
 
         # update and render frame
         frame.update()
