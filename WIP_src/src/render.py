@@ -1,15 +1,17 @@
 import numpy as np
 import cv2
 import time
+from physics import Collision, Rigidbody2D, PhysicsWorld
 
 
 class Drawable:
 
-    def __init__(self, width, height, xloc, yloc):
+    def __init__(self, width, height, xloc, yloc,rigidbody=None):
         self.width = width
         self.height = height
         self.xloc = xloc
         self.yloc = yloc
+        self.rigidbody = rigidbody
 
     # def draw(self, frame):
     #     for y in range(0, self.height):
@@ -17,6 +19,11 @@ class Drawable:
     #             if y+self.yloc < frame.height and x+self.xloc < frame.width:
     #                 frame.frame[y+self.yloc, x+self.xloc] = [255, 0, 0, 50]
     def draw(self, frame):
+        if self.rigidbody:
+            # Update position of the drawable
+            self.xloc = int(self.rigidbody.position.x)
+            self.yloc = int(self.rigidbody.position.y)
+
         for y in range(0, self.height):
             for x in range(0, self.width):
                 if y+self.yloc < frame.height and x+self.xloc < frame.width:
@@ -52,6 +59,7 @@ class Frame:
         self.start_x = self.background_x % self.background.shape[1]
         self.sprite_width = 0
         self.sprite_height = 0
+        self.drawables = []
 
 
     def render(self, sprite):
@@ -59,6 +67,7 @@ class Frame:
         self.start_x = self.background_x % self.background.shape[1]
         self.frame[:, self.start_x:] = self.background[:, :self.background.shape[1] - self.start_x]
         self.frame[:, :self.start_x] = self.background[:, self.background.shape[1] - self.start_x:]
+
 
         self.sprite_height, self.sprite_width = sprite.sprite.shape[:2]
         region_height, region_width = min(self.sprite_height, self.frame.shape[0] - sprite.yloc), min(self.sprite_width, self.frame.shape[1] - sprite.xloc)
@@ -76,16 +85,37 @@ class Frame:
         elif sprite.xloc >= self.background.shape[1] - self.sprite_width:
             self.background_x -= sprite.speed
 
+    def add_drawable(self, drawable):
+        self.drawables.append(drawable)
+
+    def remove_drawable(self, drawable):
+        self.drawables.remove(drawable)
+
+    def check_collisions(self):
+        for i, drawable1 in enumerate(self.drawables):
+            for j, drawable2 in enumerate(self.drawables):
+                if i != j:  # Don't check collision with itself
+                    if Collision.intersect(drawable1, drawable2):
+                        # Handle collision between drawables
+                        pass
+
 
 class Game:
 
     def __init__(self, frame):
         self.frame = frame
+        self.physics_world = PhysicsWorld()
 
     @staticmethod
     def tick(fps):
         interval = 1.0 / fps
         time.sleep(interval)
+    
+    def run(self, fps):
+        while True:
+            self.frame.render()
+            self.physics_world.simulate_step(1 / fps)
+            self.tick(fps)
 
 
 
