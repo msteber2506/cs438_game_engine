@@ -54,21 +54,32 @@ class Frame:
         self.sprite_height = 0
 
 
-    def render(self, sprite):
+    def render_with_physics(self, physics_objects):
+        # Render background
         self.frame = np.zeros_like(self.background)
         self.start_x = self.background_x % self.background.shape[1]
         self.frame[:, self.start_x:] = self.background[:, :self.background.shape[1] - self.start_x]
         self.frame[:, :self.start_x] = self.background[:, self.background.shape[1] - self.start_x:]
 
-        self.sprite_height, self.sprite_width = sprite.sprite.shape[:2]
-        region_height, region_width = min(self.sprite_height, self.frame.shape[0] - sprite.yloc), min(self.sprite_width, self.frame.shape[1] - sprite.xloc)
-        alpha_channel = sprite.sprite[:, :, 3] / 255.0
-        for c in range(3): 
-            self.frame[sprite.yloc:sprite.yloc + region_height, sprite.xloc:sprite.xloc + region_width, c] = \
-                (1.0 - alpha_channel[:region_height, :region_width]) * self.frame[sprite.yloc:sprite.yloc + region_height, sprite.xloc:sprite.xloc + region_width, c] + \
-                alpha_channel[:region_height, :region_width] * sprite.sprite[:region_height, :region_width, c]
-        
+        # Render physics objects
+        for obj in physics_objects:
+            self.render(obj)
+
+        # Show frame
         cv2.imshow('Game', self.frame)
+
+    def render(self, obj):
+        # Render the object onto the frame
+        sprite = obj.sprite
+        sprite_height, sprite_width = sprite.shape[:2]
+        region_height = min(sprite_height, self.frame.shape[0] - obj.yloc)
+        region_width = min(sprite_width, self.frame.shape[1] - obj.xloc)
+
+        alpha_channel = sprite[:, :, 3] / 255.0
+        for c in range(3): 
+            self.frame[obj.yloc:obj.yloc + region_height, obj.xloc:obj.xloc + region_width, c] = \
+                (1.0 - alpha_channel[:region_height, :region_width]) * self.frame[obj.yloc:obj.yloc + region_height, obj.xloc:obj.xloc + region_width, c] + \
+                alpha_channel[:region_height, :region_width] * sprite[:region_height, :region_width, c]
         
     def move_background(self, sprite):
         if sprite.xloc <= 0:
@@ -87,8 +98,7 @@ class Game:
     def tick(self, fps):
         interval = 1.0 / fps
         self.update_physics(interval)
-
-        #self.frame.render(sprite, self.physics_world.objects)
+        self.frame.render_with_physics(self.physics_world.objects)
         time.sleep(interval)
 
 
