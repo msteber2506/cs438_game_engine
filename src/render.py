@@ -22,7 +22,7 @@ class Drawable:
                 if y+self.yloc < frame.height and x+self.xloc < frame.width:
                     frame.frame[y+self.yloc, x+self.xloc] = [255, 0, 0]
 
-#simulate the frame buffer
+
 class Frame:
 
     def __init__(self, width, height):
@@ -40,7 +40,7 @@ class Frame:
         for drawable in self.drawables:
             drawable.draw(self)
 
-    def addDrawable(self, drawable):
+    def add_drawable(self, drawable):
         self.drawables.append(drawable)
     
     # def check_collisions(self):

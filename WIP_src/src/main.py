@@ -10,10 +10,10 @@ if __name__ == '__main__':
     # game = Game(frame)
 
     # square = Drawable(500, 100, 0, 400)
-    # frame.addDrawable(square)
+    # frame.add_drawable(square)
 
     # player = Player(20, 20, 100, 100)
-    # frame.addDrawable(player)
+    # frame.add_drawable(player)
 
     EventListener = EventListener()
 

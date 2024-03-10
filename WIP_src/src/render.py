@@ -42,7 +42,7 @@ class Drawable:
 #         for drawable in self.drawables:
 #             drawable.draw(self)
 
-#     def addDrawable(self, drawable):
+#     def add_drawable(self, drawable):
 #         self.drawables.append(drawable)
 class Frame:
     def __init__(self, filepath):
