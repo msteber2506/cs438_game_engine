@@ -1,4 +1,5 @@
 from render import Frame, Drawable
+import numpy as np
 import math
 
 
@@ -11,6 +12,7 @@ class Collision:
     def intersect(rect1, rect2):
         if (rect1.xloc < rect2.xloc + rect2.width) and (rect1.xloc + rect1.width > rect2.xloc) and (
                 rect1.yloc < rect2.yloc + rect2.height) and (rect1.height + rect1.yloc > rect2.yloc):
+            
             return True
         return False
 
@@ -71,32 +73,72 @@ class Rigidbody2D:
         self.forces = []
 
 class PhysicsWorld:
-    def __init__(self):
+    def __init__(self, gravity=(0, 9.8)):
+        self.gravity = np.array(gravity, dtype=float)
         self.objects = []
-        self.gravity = Vector2D(0, -9.8)
 
-    def set_gravity(self, gravity):
-        self.gravity = gravity
+    def add_object(self, obj):
+        self.objects.append(obj)
 
-    def add_object(self, rigidbody):
-        self.objects.append(rigidbody)
+    def remove_object(self, obj):
+        if obj in self.objects:
+            self.objects.remove(obj)
 
-    def remove_object(self, rigidbody):
-        self.objects.remove(rigidbody)
-
-    def apply_forces(self):
+    def simulate_step(self, dt):
         for obj in self.objects:
             obj.apply_force(self.gravity * obj.mass)
 
-    def update(self, dt):
+        # Step 2: Run numerical integration (Explicit Euler)
         for obj in self.objects:
             obj.update(dt)
 
-    def simulate_step(self, dt):
-        self.apply_forces()
-        self.update(dt)
+class PhysicsObject(Drawable):
+    def __init__(self, x, y, mass, width, height, sprite):
+        super().__init__(width, height, x, y)
+        self.mass = mass
+        self.velocity = np.array([0.0, 0.0], dtype=float)
+        self.acceleration = np.array([0.0, 0.0], dtype=float)
+        self.sprite = sprite
+
+    def apply_force(self, force):
+        # Newton's second law: F = ma => a = F/m
+        self.acceleration += force / self.mass
+
+    def update(self, dt):
+        # Update velocity based on acceleration
+        self.velocity += self.acceleration * dt
+        
+        # Update position based on velocity
+        super().xloc += self.velocity[0] * dt
+        super().yloc += self.velocity[1] * dt
+
+        # Reset acceleration for next frame
+        self.acceleration = np.array([0.0, 0.0], dtype=float)
+
+    def draw(self, frame):
+        frame.draw(self)
 
 class ProjectileThrower:
     def __init__(self, projectile):
         self.projectile = projectile
 
+class Projectile(Drawable):
+    def __init__(self, width, height, xloc, yloc, speed, angle):
+        super().__init__(width, height, xloc, yloc)
+        self.speed = speed
+        self.angle = math.radians(angle)  # Convert angle to radians
+        self.stuck = False
+
+    def shoot(self):
+        initial_velocity = Vector2D(self.speed * math.cos(self.angle),
+                                    self.speed * math.sin(self.angle))
+        return Rigidbody2D(shape=self, position=Vector2D(self.xloc, self.yloc),
+                           rotation=self.angle, mass=1, moment_of_inertia=1,
+                           linear_velocity=initial_velocity, angular_velocity=0)
+
+    def handle_collision(self, collision_point):
+        self.xloc = collision_point[0]
+        self.yloc = collision_point[1]
+        self.stuck = True
+        self.linear_velocity = Vector2D(0, 0)
+        self.angular_velocity = 0
