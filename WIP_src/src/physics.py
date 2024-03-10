@@ -15,7 +15,7 @@ class Collision:
             
             return True
         return False
-
+'''
 class Vector2D:
     def __init__(self, x, y):
         self.x = x
@@ -71,7 +71,7 @@ class Rigidbody2D:
 
         # Clear forces for the next step
         self.forces = []
-
+'''
 class PhysicsWorld:
     def __init__(self, gravity=(0, 9.8)):
         self.gravity = np.array(gravity, dtype=float)
@@ -122,23 +122,24 @@ class ProjectileThrower:
     def __init__(self, projectile):
         self.projectile = projectile
 
-class Projectile(Drawable):
-    def __init__(self, width, height, xloc, yloc, speed, angle):
-        super().__init__(width, height, xloc, yloc)
-        self.speed = speed
-        self.angle = math.radians(angle)  # Convert angle to radians
-        self.stuck = False
+    def shoot_projectile(self):
+        self.projectile.shoot()
 
-    def shoot(self):
-        initial_velocity = Vector2D(self.speed * math.cos(self.angle),
-                                    self.speed * math.sin(self.angle))
-        return Rigidbody2D(shape=self, position=Vector2D(self.xloc, self.yloc),
-                           rotation=self.angle, mass=1, moment_of_inertia=1,
-                           linear_velocity=initial_velocity, angular_velocity=0)
+class Projectile(PhysicsObject):
+    def __init__(self, x, y, mass, velocity_x, velocity_y, width, height, sprite):
+        super().__init__(x, y, mass, width, height, sprite)
+        self.velocity = np.array([velocity_x, velocity_y], dtype=float)
 
-    def handle_collision(self, collision_point):
-        self.xloc = collision_point[0]
-        self.yloc = collision_point[1]
-        self.stuck = True
-        self.linear_velocity = Vector2D(0, 0)
-        self.angular_velocity = 0
+    def update(self, dt):
+        # Apply gravitational acceleration
+        self.acceleration += np.array([0.0, -9.8])  # Assuming gravity is in the negative y-direction
+
+        # Update velocity using Explicit Euler
+        self.velocity += self.acceleration * dt
+
+        # Update position using Explicit Euler
+        self.x += self.velocity[0] * dt
+        self.y += self.velocity[1] * dt
+
+        # Reset acceleration for next frame
+        self.acceleration = np.array([0.0, 0.0], dtype=float)
