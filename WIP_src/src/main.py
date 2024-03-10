@@ -22,7 +22,7 @@ if __name__ == '__main__':
     frame = Frame(background_path)
     game = Game(frame)
     player = Player(sprite_path, frame)
-    arrow
+
 
     temp_var = 0
     while True:

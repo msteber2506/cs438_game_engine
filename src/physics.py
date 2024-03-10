@@ -1,7 +1,5 @@
-from render import Frame, Drawable
+from render import Drawable
 import numpy as np
-import math
-
 
 class Collision:
 
@@ -12,9 +10,11 @@ class Collision:
     def intersect(rect1, rect2):
         if (rect1.xloc < rect2.xloc + rect2.width) and (rect1.xloc + rect1.width > rect2.xloc) and (
                 rect1.yloc < rect2.yloc + rect2.height) and (rect1.height + rect1.yloc > rect2.yloc):
-            
+
             return True
         return False
+
+
 '''
 class Vector2D:
     def __init__(self, x, y):
@@ -72,6 +72,8 @@ class Rigidbody2D:
         # Clear forces for the next step
         self.forces = []
 '''
+
+
 class PhysicsWorld:
     def __init__(self, gravity=(0, 9.8)):
         self.gravity = np.array(gravity, dtype=float)

@@ -1,7 +1,5 @@
 import numpy as np
 import cv2
-import time
-from physics import Collision, Rigidbody2D, PhysicsWorld
 
 
 class Drawable:
@@ -45,31 +43,15 @@ class Frame:
     def addDrawable(self, drawable):
         self.drawables.append(drawable)
     
-    def check_collisions(self):
-        for i, drawable1 in enumerate(self.drawables):
-            for j, drawable2 in enumerate(self.drawables):
-                if i != j:  # Don't check collision with itself
-                    if Collision.intersect(drawable1, drawable2):
-                        # Handle collision between drawables
-                        pass
+    # def check_collisions(self):
+    #     for i, drawable1 in enumerate(self.drawables):
+    #         for j, drawable2 in enumerate(self.drawables):
+    #             if i != j:  # Don't check collision with itself
+    #                 if Collision.intersect(drawable1, drawable2):
+    #                     # Handle collision between drawables
+    #                     pass
 
 
-class Game:
-
-    def __init__(self, frame):
-        self.frame = frame
-        self.physics_world = PhysicsWorld()
-
-    @staticmethod
-    def tick(fps):
-        interval = 1.0 / fps
-        time.sleep(interval)
-
-    def run(self, fps):
-        while True:
-            self.frame.render()
-            self.physics_world.simulate_step(1 / fps)
-            self.tick(fps)
 
 
 
