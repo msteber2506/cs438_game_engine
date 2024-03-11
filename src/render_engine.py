@@ -1,3 +1,5 @@
+import stat
+from turtle import st
 import cv2
 import numpy as np
 from pathlib import Path
@@ -92,6 +94,26 @@ class RenderingEngine:
         return image_list[0]
     
     @staticmethod
+    def create_full_background(background_img, new_width):
+        #sample the background to achieve user-specified map width
+        #print(f"background img shape: {background_img.shape}")
+        old_height, old_width, _ = background_img.shape
+        #print(f"old_height = {old_height}")
+        #print(f"n")
+        new_image = np.zeros((old_height, new_width, 4), dtype=np.uint8)
+        #print(f"new_image: {new_image.shape}")
+        num_repetitions = int(np.ceil(new_width / old_width))
+        #print(f"num reps: {num_repetitions}")
+     
+        for i in range(num_repetitions):
+            start_x = i * old_width
+            end_x = min(start_x + old_width, new_width)
+            new_image[:, start_x:end_x] = background_img[:, :end_x - start_x]
+
+        #print(f"new_image: {new_image.shape}")
+        return new_image
+    
+    @staticmethod
     def render_text_on_image(image, text, font_path, font_size=38, text_color=(255, 255, 255), opacity=255, position=(10, 10), width=20):
       
         pil_image = Image.fromarray(image)
@@ -142,7 +164,7 @@ class RenderingEngine:
         return cur_window
     
     @staticmethod     
-    def scroll(full_image, virtual_window_position, window_width, scroll_amount):
+    def scroll(full_image, virtual_window_position, window_width):
         # Calculate the end position of the virtual window
         window_end = virtual_window_position + window_width
         
@@ -160,10 +182,32 @@ class RenderingEngine:
 
 
         new_scene = RenderingEngine.overlay_image(window, new_scene, (0,0))
-
-    
+        return new_scene
+        #RenderingEngine.render_to_screen(constants.WINDOW_NAME, new_scene, (constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH))
         
-        RenderingEngine.render_to_screen(constants.WINDOW_NAME, new_scene, (constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH))
+        
+
+        
+
+    @staticmethod
+    def scroll_render(window,full_bg, map_data, tile_list, virtual_window_position, isScrollToRight, sprite):
+        if isScrollToRight:
+            if virtual_window_position + constants.SCROLL_AMOUNT <= full_bg.shape[1] - constants.WINDOW_WIDTH:
+                virtual_window_position += constants.SCROLL_AMOUNT
+
+                new_scene = RenderingEngine.construct_scene(window,full_bg, map_data, tile_list, virtual_window_position)
+                new_scene = RenderingEngine.overlay_image(new_scene, sprite.sprite_images[sprite.current_frame], (sprite.xloc, sprite.yloc))
+                RenderingEngine.render_to_screen(constants.WINDOW_NAME, new_scene, (constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH))
+
+                
+        else:
+            if virtual_window_position - constants.SCROLL_AMOUNT >= 0:
+                virtual_window_position -= constants.SCROLL_AMOUNT
+
+                RenderingEngine.construct_scene(window,full_bg, map_data, tile_list, virtual_window_position)
+               
+        return virtual_window_position
+                
 
     @staticmethod
     def bresenham_line(start_coordinates, end_coordinates):
@@ -207,6 +251,8 @@ class ImageProcessor:
     @staticmethod
     def downscaling(image, new_height, new_width):
         #Uses bilineaer interpolation for resizing
+        if image.shape[2] == 4: 
+            image = image[:, :, :3]
         height, width = image.shape[:2]
         scale_y = height / new_height
         scale_x = width / new_width
@@ -227,12 +273,18 @@ class ImageProcessor:
         dx_inv = 1 - dx
         
 
-        dy = np.expand_dims(dy, axis=-1)
-        dx = np.expand_dims(dx, axis=-1)
+        dy = np.expand_dims(dy, axis=2)
+        dx = np.expand_dims(dx, axis=2)
+        
         
         dx_inv = np.tile(dx_inv[:, :, np.newaxis], (1, 1, 3))
         dy_inv = np.tile(dy_inv[:, :, np.newaxis], (1, 1, 3))
-        
+        # dx_inv = np.tile(dx_inv[:, :, np.newaxis], (1, 1, 4))
+        # dy_inv = np.tile(dy_inv[:, :, np.newaxis], (1, 1, 4))
+
+        print("image[y0, x0].shape",image[y0, x0].shape)
+        print("dx_inv.shape",dx_inv.shape)
+        print("dx.shape",dx.shape)
         interpolated_values = (image[y0, x0] * dx_inv * dy_inv +
                             image[y0, x1] * dx * dy_inv +
                             image[y1, x0] * dx_inv * dy +
@@ -242,6 +294,8 @@ class ImageProcessor:
     
     @staticmethod
     def upscaling(image, new_height, new_width):
+        if image.shape[2] == 4: 
+            image = image[:, :, :3]
         #Uses bilineaer interpolation for resizing
         height, width = image.shape[:2]
         scale_y = new_height / height
@@ -309,3 +363,162 @@ class ImageProcessor:
                             image[y1, x1] * dx * dy)
         
         return interpolated_values.astype(np.uint8)
+
+
+    
+    
+
+    @staticmethod
+    def flip_image_y_axis(image):
+        # Check if the image is valid
+        if image is None:
+            print("Error: Input image is invalid.")
+            return None
+
+        # Get the dimensions of the image
+        height, width, _ = image.shape
+
+        # Create an empty array to store the flipped image
+        flipped_image = np.empty_like(image)
+
+        # Flip the image along the y-axis by reversing the order of columns in each row
+        for row in range(height):
+            flipped_image[row, :] = image[row, ::-1]
+
+        return flipped_image
+    
+    @staticmethod
+    def rotate(image, angle):
+        height, width = image.shape[:2]
+        center = (width / 2, height / 2)
+
+      
+        angle_rad = np.deg2rad(angle)
+
+  
+        rotation_matrix = np.array([[np.cos(angle_rad), -np.sin(angle_rad)],
+                                    [np.sin(angle_rad), np.cos(angle_rad)]])
+
+
+        new_width = int(np.ceil(width * np.abs(np.cos(angle_rad)) + height * np.abs(np.sin(angle_rad))))
+        new_height = int(np.ceil(width * np.abs(np.sin(angle_rad)) + height * np.abs(np.cos(angle_rad))))
+
+
+        tx = (new_width - width) / 2
+        ty = (new_height - height) / 2
+
+        rotated_image = np.zeros((new_height, new_width, 3), dtype=np.uint8)
+
+        for y in range(new_height):
+            for x in range(new_width):
+        
+                x_centered = x - center[0] - tx
+                y_centered = y - center[1] - ty
+
+          
+                x_rotated, y_rotated = np.dot(rotation_matrix, [x_centered, y_centered])
+
+                x_rotated += center[0]
+                y_rotated += center[1]
+
+
+                x_floor, y_floor = int(np.floor(x_rotated)), int(np.floor(y_rotated))
+                x_ceil, y_ceil = x_floor + 1, y_floor + 1
+
+                if 0 <= x_floor < width - 1 and 0 <= x_ceil < width and 0 <= y_floor < height - 1 and 0 <= y_ceil < height:
+                    x_weight = x_rotated - x_floor
+                    y_weight = y_rotated - y_floor
+
+                    top_left = image[y_floor, x_floor] * (1 - x_weight) * (1 - y_weight)
+                    top_right = image[y_floor, x_ceil] * x_weight * (1 - y_weight)
+                    bottom_left = image[y_ceil, x_floor] * (1 - x_weight) * y_weight
+                    bottom_right = image[y_ceil, x_ceil] * x_weight * y_weight
+
+                    rotated_image[y, x] = np.clip(top_left + top_right + bottom_left + bottom_right, 0, 255).astype(np.uint8)
+
+        return rotated_image
+    
+    @staticmethod
+    def render_motion_blur(trailing_sprites, window):
+        scene = window.copy()
+        for sprite_info in trailing_sprites:
+            # Extract sprite_x, sprite_y, and alpha values from sprite_info
+            sprite_x, sprite_y, alpha = sprite_info
+            
+            # Render the sprite on the scene
+            scene = overlay_image(scene, sprite, sprite_x, sprite_y, alpha)
+        return scene
+    @staticmethod
+    def update_trailing_sprites(coordinates, velocity, num_trailing_sprites, alpha_initial, key):
+        sprite_x, sprite_y = coordinates
+        # Generate alpha values using np.linspace()
+        alpha_values = np.linspace(alpha_initial, 1.0, num_trailing_sprites) 
+
+        if key == "w":
+            sprites = [(sprite_x, sprite_y +  (i * velocity), alpha_values[len(alpha_values) - 1 - i]) for i in range(num_trailing_sprites)]
+            sprites = list(reversed(sprites))
+        elif key == "s":
+            sprites = [(sprite_x, sprite_y +  (i * velocity), alpha_values[i]) for i in range(num_trailing_sprites)]
+        elif key == "a":
+            sprites = [(sprite_x + (i * velocity), sprite_y, alpha_values[len(alpha_values) - 1 - i]) for i in range(num_trailing_sprites)]
+            sprites = list(reversed(sprites))
+            
+        elif key == "d":
+            sprites = [(sprite_x + (i * velocity), sprite_y, alpha_values[i]) for i in range(num_trailing_sprites)]
+
+        
+        return sprites
+    
+
+
+class Sprite:
+    def __init__(self, image_paths, coordinates):
+        self.sprite_images = [cv2.imread(image_path, cv2.IMREAD_UNCHANGED) for image_path in image_paths]
+        self.current_frame = 0
+        self.xloc = coordinates[0]
+        self.yloc = coordinates[1]
+        self.speed = 10
+
+    # def move(self, direction):
+    #     # Update sprite location based on direction
+    #     if direction == "right":
+    #         self.xloc += self.speed
+    #         self.current_frame = (self.current_frame + 1) % len(self.sprite_images)
+
+            
+    #     elif direction == "left":
+    #         self.xloc -= self.speed
+    #         self.current_frame = (self.current_frame + 1) % len(self.sprite_images)
+        
+    def move(self, direction, window, full_bg, map_data, tile_list, virtual_window_position, clean_map):
+        # Update sprite location based on direction
+        virtual_window_position
+        if direction == "right":
+            if self.xloc + self.speed + self.sprite_images[self.current_frame].shape[1] >= constants.WINDOW_WIDTH:
+                virtual_window_position = RenderingEngine.scroll_render(window, full_bg, map_data, tile_list, virtual_window_position, isScrollToRight=True, sprite=self)
+
+                print(f"virtual = {virtual_window_position}")
+                # scene = RenderingEngine.overlay_image(clean_map, self.sprite_images[self.current_frame], (self.xloc, self.yloc))
+                # RenderingEngine.render_to_screen(constants.WINDOW_NAME, scene, (constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH))
+            else:
+                self.xloc += self.speed
+                self.current_frame = (self.current_frame + 1) % len(self.sprite_images)
+                scene = RenderingEngine.overlay_image(clean_map, self.sprite_images[self.current_frame], (self.xloc, self.yloc))
+                RenderingEngine.render_to_screen(constants.WINDOW_NAME, scene, (constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH))
+        elif direction == "left":
+            if self.xloc - self.speed <= 0:
+                virtual_window_position = RenderingEngine.scroll_render(window, full_bg, map_data, tile_list, virtual_window_position, isScrollToRight=False, sprite=self)
+                scene = RenderingEngine.overlay_image(clean_map, ImageProcessor.flip_image_y_axis(self.sprite_images[self.current_frame]), (self.xloc, self.yloc))
+                RenderingEngine.render_to_screen(constants.WINDOW_NAME, scene, (constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH))
+            else:
+                self.xloc -= self.speed
+                self.current_frame = (self.current_frame + 1) % len(self.sprite_images)
+                scene = RenderingEngine.overlay_image(clean_map, ImageProcessor.flip_image_y_axis(self.sprite_images[self.current_frame]), (self.xloc, self.yloc))
+                RenderingEngine.render_to_screen(constants.WINDOW_NAME, scene, (constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH))
+        return virtual_window_position
+ 
+
+
+
+
+    

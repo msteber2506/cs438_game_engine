@@ -438,6 +438,37 @@ class ImageProcessor:
 
         return rotated_image
     
+    @staticmethod
+    def render_motion_blur(trailing_sprites, window):
+        scene = window.copy()
+        for sprite_info in trailing_sprites:
+            # Extract sprite_x, sprite_y, and alpha values from sprite_info
+            sprite_x, sprite_y, alpha = sprite_info
+            
+            # Render the sprite on the scene
+            scene = overlay_image(scene, sprite, sprite_x, sprite_y, alpha)
+        return scene
+    @staticmethod
+    def update_trailing_sprites(coordinates, velocity, num_trailing_sprites, alpha_initial, key):
+        sprite_x, sprite_y = coordinates
+        # Generate alpha values using np.linspace()
+        alpha_values = np.linspace(alpha_initial, 1.0, num_trailing_sprites) 
+
+        if key == "w":
+            sprites = [(sprite_x, sprite_y +  (i * velocity), alpha_values[len(alpha_values) - 1 - i]) for i in range(num_trailing_sprites)]
+            sprites = list(reversed(sprites))
+        elif key == "s":
+            sprites = [(sprite_x, sprite_y +  (i * velocity), alpha_values[i]) for i in range(num_trailing_sprites)]
+        elif key == "a":
+            sprites = [(sprite_x + (i * velocity), sprite_y, alpha_values[len(alpha_values) - 1 - i]) for i in range(num_trailing_sprites)]
+            sprites = list(reversed(sprites))
+            
+        elif key == "d":
+            sprites = [(sprite_x + (i * velocity), sprite_y, alpha_values[i]) for i in range(num_trailing_sprites)]
+
+        
+        return sprites
+    
 
 
 class Sprite:
