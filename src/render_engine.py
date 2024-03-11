@@ -2,6 +2,9 @@ import cv2
 import numpy as np
 from pathlib import Path
 import constants
+import textwrap
+from PIL import Image, ImageDraw, ImageFont
+import pickle
 
 class RenderingEngine:
     def __init__(self):
@@ -88,7 +91,85 @@ class RenderingEngine:
         image_list[0] = cv2.resize(image_list[0], (constants.TILE_MAP_SCREEN_WIDTH, constants.TILE_MAP_SCREEN_HEIGHT))
         return image_list[0]
     
-    def draw_bresenham_line(x0, y0, x1, y1):
+    @staticmethod
+    def render_text_on_image(image, text, font_path, font_size=38, text_color=(255, 255, 255), opacity=255, position=(10, 10), width=20):
+      
+        pil_image = Image.fromarray(image)
+
+
+        wrapped_text = textwrap.wrap(text, width=width)
+
+  
+        wrapped_text_str = '\n'.join(wrapped_text)
+
+     
+        font = ImageFont.truetype(font_path, size=font_size)
+
+ 
+        draw = ImageDraw.Draw(pil_image)
+
+        text_color_with_opacity = text_color[:3] + (opacity,)
+
+        draw.text(position, wrapped_text_str, fill=text_color_with_opacity, font=font)
+
+        cv_image = np.array(pil_image)
+
+        return cv_image
+    
+    @staticmethod
+    def load_pickled_data(file_path):
+        try:
+            with open(file_path, 'rb') as file:
+                unpickled_data = pickle.load(file)
+            return unpickled_data
+        except FileNotFoundError:
+            print(f"Error: File '{file_path}' not found.")
+            return None
+        except Exception as e:
+            print(f"Error occurred while loading pickled data: {e}")
+            return None
+        
+    @staticmethod
+    def draw_world(full_bg, map_data, tile_list):
+        cur_window = full_bg.copy()
+        for row_num, row in enumerate(map_data):
+            for col_num, tile in enumerate(row):
+                if tile >= 0:
+                    x_coor = col_num * constants.TILE_SIZE
+                    y_coor = row_num * constants.TILE_SIZE
+                    cur_window = RenderingEngine.overlay_image(cur_window, tile_list[tile], (x_coor, y_coor))
+
+        return cur_window
+    
+    @staticmethod     
+    def scroll(full_image, virtual_window_position, window_width, scroll_amount):
+        # Calculate the end position of the virtual window
+        window_end = virtual_window_position + window_width
+        
+        # Extract the portion of the full image within the virtual window
+        scrolled_image = full_image[:, virtual_window_position:window_end].copy()
+        
+        return scrolled_image
+    
+    @staticmethod
+    def construct_scene(window,full_bg, map_data, tile_list, virtual_window_position):
+    
+        new_scene = RenderingEngine.draw_world(full_bg, map_data, tile_list)
+    
+        new_scene = RenderingEngine.scroll(new_scene, virtual_window_position, constants.WINDOW_WIDTH)
+
+
+        new_scene = RenderingEngine.overlay_image(window, new_scene, (0,0))
+
+    
+        
+        RenderingEngine.render_to_screen(constants.WINDOW_NAME, new_scene, (constants.WINDOW_HEIGHT, constants.WINDOW_WIDTH))
+
+    @staticmethod
+    def bresenham_line(start_coordinates, end_coordinates):
+        x0, y0 = start_coordinates
+        x1, y1 = end_coordinates
+
         step_size_x, step_size_y = abs(x1 - x0), abs(y1 - y0)
         move_to_the_right = 1
         move_to_the_left = -1
@@ -102,7 +183,7 @@ class RenderingEngine:
         line = []
         while True:
             line.append((x0, y0))
-            
+
             if x0 == x1 and y0 == y1:
                 break
             
